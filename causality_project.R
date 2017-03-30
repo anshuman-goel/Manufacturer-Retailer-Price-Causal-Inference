@@ -3,6 +3,7 @@
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("graph")
 # biocLite("RBGL")
+# biocLite("Rgraphviz")
 #install.packages('pcalg')
 #install.packages('vars')
 #install.packages('urca')
@@ -13,13 +14,12 @@ library(vars)
 library(urca)
 
 # Read the input data 
-data<-read.csv("E:\\NCSU\\Semester 2\\Algorithms for Data Guided Business Intelligence\\Projects\\Manufacturer Retailer Price Causal Inference\\causality\\data.csv",header = TRUE,sep = ',')
+data<-read.csv("./data.csv",header = TRUE,sep = ',')
 
 # Build a VAR model 
 # Select the lag order using the Schwarz Information Criterion with a maximum lag of 10
 # see ?VARselect to find the optimal number of lags and use it as input to VAR()
-VARselect(data)
-model<-VAR(data,lag.max = 1,ic="SC")
+model<-VAR(data,lag.max = VARselect(data)$selection[3],ic="SC")
 
 # Extract the residuals from the VAR model 
 # see ?residuals
@@ -35,16 +35,23 @@ summary(ur.df(res[,3],selectlags = "BIC"))
 
 # Check whether the variables follow a Gaussian distribution  
 # see ?ks.test
-ks.test(res[,1],"pnorm",exact = FALSE)
-ks.test(res[,2],"pnorm",exact = FALSE)
-ks.test(res[,3],"pnorm",exact = FALSE)
+#Ref:
+#https://arxiv.org/pdf/1603.00784.pdf
+#https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
+ks.test(res[,1],pnorm,exact = FALSE)
+ks.test(res[,2],pnorm,exact = FALSE)
+ks.test(res[,3],pnorm,exact = FALSE)
 
 # Write the residuals to a csv file to build causal graphs using Tetrad software
-
+write.table(res,file = "./residual.csv",sep=",",row.names = FALSE)
 
 # OR Run the PC and LiNGAM algorithm in R as follows,
 # see ?pc and ?LINGAM 
 
 # PC Algorithm
+suffStat<-list(C=cor(res), n=1000)
+pc_algo<-pc(suffStat,indepTest=gaussCItest,alpha=0.1,labels=colnames(res),skel.method="original",verbose=TRUE)
+plot(pc_algo,main="PC Graph")
 
 # LiNGAM Algorithm
+show(lingam(res,verbose =1))
