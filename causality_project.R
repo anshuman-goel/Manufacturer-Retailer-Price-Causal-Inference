@@ -19,7 +19,7 @@ data<-read.csv("./data.csv",header = TRUE,sep = ',')
 # Build a VAR model 
 # Select the lag order using the Schwarz Information Criterion with a maximum lag of 10
 # see ?VARselect to find the optimal number of lags and use it as input to VAR()
-model<-VAR(data,lag.max = VARselect(data)$selection[3],ic="SC")
+model<-VAR(data,p = VARselect(data,type=c("const"))$selection[3],ic="SC",type=c("const"))
 
 # Extract the residuals from the VAR model 
 # see ?residuals
@@ -49,8 +49,8 @@ write.table(res,file = "./residual.csv",sep=",",row.names = FALSE)
 # see ?pc and ?LINGAM 
 
 # PC Algorithm
-suffStat<-list(C=cor(res), n=1000)
-pc_algo<-pc(suffStat,indepTest=gaussCItest,alpha=0.1,labels=colnames(res),skel.method="original",verbose=TRUE)
+suffStat<-list(C=cor(res), n=250)
+pc_algo<-pc(suffStat,indepTest=gaussCItest,alpha=0.05,labels=colnames(res),skel.method="original",verbose=TRUE)
 plot(pc_algo,main="PC Graph")
 
 # LiNGAM Algorithm
